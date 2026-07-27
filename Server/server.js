@@ -1,0 +1,70 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+// --- Connect to MongoDB (Supports both Local and Cloud MongoDB Atlas) ---
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ecommerce';
+
+mongoose.connect(MONGO_URI)
+  .then(() => console.log('Connected to MongoDB!'))
+  .catch((err) => console.error('MongoDB connection error:', err));
+
+// --- MongoDB Order Schema ---
+const orderSchema = new mongoose.Schema({
+  userId: { type: String, default: null },
+  cart: Array,
+  total: Number,
+  address: {
+    fullName: String,
+    phone: String,
+    street: String,
+    city: String,
+    pincode: String
+  },
+  paymentMethod: String,
+  status: { type: String, default: 'Placed' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Order = mongoose.model('Order', orderSchema);
+
+// --- 1. POST API: Save Order to MongoDB ---
+app.post('/api/checkout', async (req, res) => {
+  try {
+    const { userId, cart, total, address, paymentMethod } = req.body;
+
+    const newOrder = new Order({
+      userId,
+      cart,
+      total,
+      address,
+      paymentMethod
+    });
+
+    await newOrder.save();
+    res.status(201).json({ success: true, message: 'Order saved successfully!', order: newOrder });
+  } catch (error) {
+    console.error('Checkout error:', error);
+    res.status(500).json({ success: false, message: 'Failed to save order' });
+  }
+});
+
+// --- 2. GET API: Fetch User Orders from MongoDB ---
+app.get('/api/orders/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const orders = await Order.find({ userId }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    console.error('Fetch orders error:', error);
+    res.status(500).json({ message: 'Error fetching orders' });
+  }
+});
+
+// --- Start Server (Dynamic Port for Deployment compatibility) ---
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Backend server running on port ${PORT}`));
