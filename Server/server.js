@@ -61,6 +61,50 @@ app.use((req, res, next) => {
   next();
 });
 
+// --- Seed API: Populate Initial Sample Products ---
+app.get('/api/seed', async (req, res) => {
+  try {
+    await Product.deleteMany({}); // Clears existing products in DB
+
+    const sampleProducts = [
+      {
+        name: "Wireless Gaming Mouse",
+        price: 49.99,
+        image: "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500",
+        category: "Electronics",
+        description: "High-precision wireless gaming mouse with RGB lighting."
+      },
+      {
+        name: "Mechanical Keyboard",
+        price: 89.99,
+        image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500",
+        category: "Electronics",
+        description: "Tactile mechanical keyboard with customizable keys."
+      },
+      {
+        name: "Noise-Canceling Headphones",
+        price: 199.99,
+        image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500",
+        category: "Audio",
+        description: "Premium over-ear headphones with active noise cancellation."
+      },
+      {
+        name: "Smart Watch",
+        price: 129.99,
+        image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500",
+        category: "Wearables",
+        description: "Fitness tracker with heart rate monitor and AMOLED display."
+      }
+    ];
+
+    const createdProducts = await Product.insertMany(sampleProducts);
+    res.json({ message: "Database seeded successfully!", count: createdProducts.length, products: createdProducts });
+  } catch (error) {
+    console.error('Seeding error:', error);
+    res.status(500).json({ message: 'Failed to seed database', error: error.message });
+  }
+});
+
 // --- 0. GET API: Fetch All Products from MongoDB ---
 app.get('/api/products', async (req, res) => {
   try {
