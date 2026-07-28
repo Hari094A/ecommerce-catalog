@@ -13,6 +13,17 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log('Connected to MongoDB!'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
+// --- MongoDB Product Schema ---
+const productSchema = new mongoose.Schema({
+  name: String,
+  price: Number,
+  image: String,
+  category: String,
+  description: String
+});
+
+const Product = mongoose.model('Product', productSchema);
+
 // --- MongoDB Order Schema ---
 const orderSchema = new mongoose.Schema({
   userId: { type: String, default: null },
@@ -31,6 +42,17 @@ const orderSchema = new mongoose.Schema({
 });
 
 const Order = mongoose.model('Order', orderSchema);
+
+// --- 0. GET API: Fetch All Products from MongoDB ---
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await Product.find({});
+    res.json(products);
+  } catch (error) {
+    console.error('Fetch products error:', error);
+    res.status(500).json({ message: 'Error fetching products' });
+  }
+});
 
 // --- 1. POST API: Save Order to MongoDB ---
 app.post('/api/checkout', async (req, res) => {
