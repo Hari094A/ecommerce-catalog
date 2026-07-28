@@ -3,14 +3,22 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
-app.use(express.json());
-app.use(cors());
 
-// --- Connect to MongoDB (Supports both Local and Cloud MongoDB Atlas) ---
+// --- Express Middleware ---
+app.use(express.json());
+
+// Enable CORS for all origins (including Vercel frontend)
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// --- Connect to MongoDB (Cloud Atlas or Local Fallback) ---
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ecommerce';
 
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('Connected to MongoDB!'))
+  .then(() => console.log('Successfully connected to MongoDB!'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
 // --- MongoDB Product Schema ---
@@ -42,6 +50,16 @@ const orderSchema = new mongoose.Schema({
 });
 
 const Order = mongoose.model('Order', orderSchema);
+
+// --- Middleware: Verify DB Connection ---
+app.use((req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ 
+      message: 'Database connection is not ready. Please check Render environment variables and MongoDB Atlas Network Access.' 
+    });
+  }
+  next();
+});
 
 // --- 0. GET API: Fetch All Products from MongoDB ---
 app.get('/api/products', async (req, res) => {
@@ -92,6 +110,6 @@ app.get('/', (req, res) => {
   res.send('E-commerce Catalog API is running successfully with MongoDB!');
 });
 
-// --- Start Server (Dynamic Port for Deployment compatibility) ---
+// --- Start Server ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Backend server running on port ${PORT}`));

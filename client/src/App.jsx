@@ -13,12 +13,13 @@ function App() {
   const [checkoutItem, setCheckoutItem] = useState(null);
 
   // Fetch products from backend on component load
-  useEffect(() => {
-    fetch('http://localhost:5000/api/products')
-      .then((res) => res.json())
-      .then((data) => setProducts(data))
-      .catch((err) => console.error('Error fetching products:', err));
-  }, []);
+ // BEFORE (Line 16)
+useEffect(() => {
+  fetch('https://ecommerce-catalog-2.onrender.com/api/products')
+    .then((res) => res.json())
+    .then((data) => setProducts(data))
+    .catch((err) => console.error('Error fetching products:', err));
+}, []);
   
   // Theme state configuration
   const themeStyles = {
